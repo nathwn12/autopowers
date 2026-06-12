@@ -1,7 +1,30 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { tool } from '@opencode-ai/plugin';
+
+// Minimal @opencode-ai/plugin shim — zero dependencies
+const tool = (def) => def;
+tool.schema = {
+  string: () => {
+    const s = (() => {});
+    s._meta = { type: 'string', optional: false, description: '' };
+    s.describe = (d) => { s._meta.description = d; return s; };
+    s.optional = () => { s._meta.optional = true; return s; };
+    return s;
+  },
+  array: (itemSchema) => {
+    const a = (() => {});
+    a._meta = { type: 'array', description: '', items: itemSchema };
+    a.describe = (d) => { a._meta.description = d; return a; };
+    return a;
+  },
+  object: (shape) => {
+    const o = (() => {});
+    o._meta = { type: 'object', description: '', properties: shape };
+    o.describe = (d) => { o._meta.description = d; return o; };
+    return o;
+  },
+};
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillsDir = path.resolve(__dirname, '../../skills');
