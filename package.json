@@ -1,0 +1,13 @@
+{
+  "name": "autopowers",
+  "version": "1.0.0",
+  "description": "Orchestrator-powered development for OpenCode. From idea to shipped — zero process management.",
+  "type": "module",
+  "main": ".opencode/plugins/autopowers.js",
+  "license": "MIT",
+  "author": "nathwn12",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nathwn12/autopowers.git"
+  }
+}
