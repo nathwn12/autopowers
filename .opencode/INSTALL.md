@@ -1,40 +1,34 @@
 # Installation
 
-## Add to opencode.json
+## Add to opencode.jsonc
 
-```json
+```jsonc
 {
-  "plugin": "https://github.com/nathwn12/regent.git"
+  "plugin": "regent@git+https://github.com/nathwn12/regent.git"
 }
 ```
 
 ## Pin a version
 
-```json
+```jsonc
 {
-  "plugin": "https://github.com/nathwn12/regent.git#v2.0.0"
+  "plugin": "regent@git+https://github.com/nathwn12/regent.git#v2.1.0"
 }
 ```
 
 ## Verify
 
-Start a new session. You should see the AutoPowers bootstrap message. Run `/orchestrate` to test.
+Start a new session. The AutoPowers bootstrap injects automatically. Run `/orchestrate` to test.
 
 ## Troubleshooting
 
 **Plugin not loading:**
-- Check that `opencode.json` is valid JSON (comments not allowed)
-- Run `npm install --prefix .opencode` from the project root
+- Make sure the URL is correct and the repo is accessible
 - Restart the OpenCode session
 
 **Skills not found:**
-- Verify the skills directory path is correct in the plugin config
-- Skills should be at `skills/<name>/SKILL.md` relative to the repo root
+- Verify the plugin installed correctly — check `~/.cache/opencode/packages/regent@git+https_*/node_modules/regent/skills/`
 
 **Orchestrator not auto-triggering:**
-- The orchestrator loads on the `/orchestrate` command or when user states a goal
-- Make sure the bootstrap skill is injected (check first session message)
-
-**Windows:**
-- Git-backed plugin installs may need `npm install --prefix .opencode` run manually
-- Paths use forward slashes in `opencode.json` even on Windows
+- The orchestrator loads on `/orchestrate` or when user states a goal
+- The bootstrap skill injects into the first user message of every session

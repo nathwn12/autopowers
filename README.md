@@ -47,23 +47,23 @@ Every phase has a gate. No phase skips. Every claim has evidence.
 
 ## Installation
 
-Add to your project's `opencode.json`:
+Add to your project's `opencode.jsonc`:
 
-```json
+```jsonc
 {
-  "plugin": "https://github.com/nathwn12/regent.git"
+  "plugin": "regent@git+https://github.com/nathwn12/regent.git"
 }
 ```
 
 Pin a version:
 
-```json
+```jsonc
 {
-  "plugin": "https://github.com/nathwn12/regent.git#v2.0.0"
+  "plugin": "regent@git+https://github.com/nathwn12/regent.git#v2.1.0"
 }
 ```
 
-AutoPowers auto-injects into every session. No manual loading. Just start typing.
+Zero npm. Zero config. Clone and go. AutoPowers auto-injects into every session.
 
 ## Principles
 
