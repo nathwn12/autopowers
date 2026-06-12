@@ -1,12 +1,10 @@
 import path from 'path';
 import fs from 'fs';
-import os from 'os';
 import { fileURLToPath } from 'url';
 import { tool } from '@opencode-ai/plugin';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillsDir = path.resolve(__dirname, '../../skills');
-const homeDir = os.homedir();
 
 // ── Frontmatter extraction ──────────────────────────────────
 const extractContent = (content) => {
@@ -98,7 +96,12 @@ async function dispatchSubagent(client, task, context, expectedOutput) {
       concerns = responseText.match(/CONCERN:.*$/gm)?.map(c => c.replace('CONCERN:', '').trim()) || [];
     }
 
-    return { status, output, concerns };
+    const filesChanged = responseText.match(/(?:^|\n)(?:[\w.\-/\\]+\.[a-zA-Z0-9]+)/gm)
+      ?.map(f => f.trim())
+      .filter(f => !f.startsWith('CONCERN:') && !f.startsWith('NEEDS_CONTEXT') && !f.startsWith('BLOCKED'))
+      .slice(0, 20) || [];
+
+    return { status, output, concerns, files_changed: filesChanged };
   } catch (err) {
     return { status: 'blocked', output: `Subagent error: ${err.message}`, concerns: [] };
   }
@@ -289,12 +292,25 @@ export const AutopowersPlugin = async ({ client }) => {
 
           for (const req of reqs) {
             const trimmed = req.trim();
-            if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('-')) continue;
-            if (implemented.toLowerCase().includes(trimmed.toLowerCase())) {
+            if (!trimmed || trimmed.startsWith('#')) continue;
+            const normal = trimmed.replace(/^-\s*\[\s*[x ]?\s*\]\s*/i, '').trim();
+            if (!normal) continue;
+            if (implemented.toLowerCase().includes(normal.toLowerCase())) {
               met.push(trimmed);
             } else {
               unmet.push(trimmed);
             }
+          }
+
+          const implLines = implemented.split('\n').map(l => l.trim()).filter(Boolean);
+          for (const line of implLines) {
+            const normal = line.replace(/^-\s*\[\s*[x ]?\s*\]\s*/i, '').trim();
+            if (!normal || normal.startsWith('#')) continue;
+            const mentioned = reqs.some(r => {
+              const rn = r.trim().replace(/^-\s*\[\s*[x ]?\s*\]\s*/i, '').trim();
+              return rn && normal.toLowerCase().includes(rn.toLowerCase());
+            });
+            if (!mentioned) extras.push(normal);
           }
 
           return JSON.stringify({
@@ -302,7 +318,7 @@ export const AutopowersPlugin = async ({ client }) => {
             requirements_met: met,
             requirements_unmet: unmet,
             extras_built: extras,
-            summary: `${met.length}/${reqs.length} requirements met`,
+            summary: `${met.length}/${reqs.length} requirements met, ${extras.length} extras flagged`,
           });
         },
       }),
