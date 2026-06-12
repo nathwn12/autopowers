@@ -18,7 +18,7 @@ let bootstrapCache;
 const getBootstrap = () => {
   if (bootstrapCache !== undefined) return bootstrapCache;
 
-  const skillPath = path.join(skillsDir, 'using-autopowers', 'SKILL.md');
+  const skillPath = path.join(skillsDir, 'using-regent', 'SKILL.md');
   if (!fs.existsSync(skillPath)) {
     bootstrapCache = null;
     return null;
@@ -46,7 +46,7 @@ ${toolMap}
 async function dispatchSubagent(client, task, context, expectedOutput) {
   try {
     const session = await client.session.create({
-      body: { title: `autopowers: ${task.replace(/[^a-zA-Z0-9 ]/g, '').slice(0, 60)}` },
+      body: { title: `regent: ${task.replace(/[^a-zA-Z0-9 ]/g, '').slice(0, 60)}` },
     });
 
     const prompt = [
@@ -108,10 +108,10 @@ async function dispatchSubagent(client, task, context, expectedOutput) {
 }
 
 // ── Plugin export ────────────────────────────────────────────
-export const AutopowersPlugin = async ({ client }) => {
+export const RegentPlugin = async ({ client }) => {
   return {
 
-    // Register skills path so OpenCode discovers autopowers skills
+    // Register skills path so OpenCode discovers regent skills
     config: async (config) => {
       config.skills = config.skills || {};
       config.skills.paths = config.skills.paths || [];
@@ -128,8 +128,15 @@ export const AutopowersPlugin = async ({ client }) => {
       const firstUser = output.messages.find(m => m.info?.role === 'user');
       if (!firstUser?.parts?.length) return;
 
-      if (firstUser.parts.some(p => p.type === 'text' && p.text.includes('EXTREMELY_IMPORTANT'))) return;
+      // Guard: skip if any text part at any position already has the marker
+      const allText = output.messages
+        .flatMap(m => m.parts || [])
+        .filter(p => p.type === 'text')
+        .map(p => p.text)
+        .join('');
+      if (allText.includes('EXTREMELY_IMPORTANT')) return;
 
+      firstUser.text = firstUser.text || '';
       firstUser.parts.unshift({
         type: 'text',
         text: bootstrap,
@@ -283,35 +290,40 @@ export const AutopowersPlugin = async ({ client }) => {
           implementation_context: tool.schema.string().describe('What was built: file list, summary of changes, or diff'),
         },
         async execute(args) {
-          const reqs = args.requirements.split('\n').filter(r => r.trim().length > 0);
-          const implemented = args.implementation_context;
+          const stripCheckbox = (s) => s.replace(/^[-*]\s*\[\s*[x ]?\s*\]\s*/i, '').replace(/^[-*\d+.]\s+/, '').trim();
+
+          const reqs = args.requirements.split('\n')
+            .map(r => stripCheckbox(r))
+            .filter(r => r.length > 2 && !r.startsWith('#') && !r.startsWith('```'));
+
+          const impl = args.implementation_context.toLowerCase();
 
           const met = [];
           const unmet = [];
-          const extras = [];
 
           for (const req of reqs) {
-            const trimmed = req.trim();
-            if (!trimmed || trimmed.startsWith('#')) continue;
-            const normal = trimmed.replace(/^-\s*\[\s*[x ]?\s*\]\s*/i, '').trim();
-            if (!normal) continue;
-            if (implemented.toLowerCase().includes(normal.toLowerCase())) {
-              met.push(trimmed);
+            const reqLower = req.toLowerCase();
+            const found = reqLower.split(/\s+/).some(word =>
+              word.length > 3 && impl.includes(word)
+            );
+            if (found) {
+              met.push(req);
             } else {
-              unmet.push(trimmed);
+              unmet.push(req);
             }
           }
 
-          const implLines = implemented.split('\n').map(l => l.trim()).filter(Boolean);
-          for (const line of implLines) {
-            const normal = line.replace(/^-\s*\[\s*[x ]?\s*\]\s*/i, '').trim();
-            if (!normal || normal.startsWith('#')) continue;
-            const mentioned = reqs.some(r => {
-              const rn = r.trim().replace(/^-\s*\[\s*[x ]?\s*\]\s*/i, '').trim();
-              return rn && normal.toLowerCase().includes(rn.toLowerCase());
+          const implLines = args.implementation_context.split('\n')
+            .map(l => stripCheckbox(l))
+            .filter(l => l.length > 3 && !l.startsWith('#') && !l.startsWith('```'));
+
+          const extras = implLines.filter(line => {
+            const lineLower = line.toLowerCase();
+            return !reqs.some(req => {
+              const reqWords = req.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+              return reqWords.some(w => lineLower.includes(w));
             });
-            if (!mentioned) extras.push(normal);
-          }
+          });
 
           return JSON.stringify({
             compliant: unmet.length === 0,

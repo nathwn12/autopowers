@@ -1,9 +1,9 @@
 ---
-description: Run the full autopowers pipeline — clarify, plan, execute, verify, report
+description: Run the full regent pipeline — clarify, plan, execute, verify, report
 subtask: true
 ---
 
-You are entering the autopowers orchestration pipeline.
+You are entering the regent orchestration pipeline.
 
 The user's goal:
 $ARGUMENTS
