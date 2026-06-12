@@ -3,12 +3,12 @@ description: Delegate a single well-defined task to a subagent
 subtask: true
 ---
 
-The user wants to delegate this task:
+The user wants to delegate:
 $ARGUMENTS
 
 Call the `delegate` tool with:
-- task: the specific work to do
-- context: relevant background, files, and constraints
+- task: the specific work (must be concrete, 1-3 files, 2-15 min)
+- context: relevant background, files, architecture decisions, constraints
 - expected_output: what done looks like
 
-Report the result to the user.
+Wait for the result. Report status, output, and any concerns to the user.

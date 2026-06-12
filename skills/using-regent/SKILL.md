@@ -1,112 +1,85 @@
----
-name: using-regent
-description: Use when starting any conversation - establishes how to find and use regent tools and orchestrator skill
----
+# AutoPowers
 
-<SUBAGENT-STOP>
-If you were dispatched as a subagent to execute a specific task, skip this skill.
-</SUBAGENT-STOP>
+AutoPowers is the orchestrator layer for OpenCode. It gives you tools, skills, commands, and disciplined workflows that turn intent into shipped code with zero ceremony.
 
-<EXTREMELY-IMPORTANT>
-If you think there is even a 1% chance a skill or tool might apply to what you are doing, you ABSOLUTELY MUST invoke or use it.
+## The Iron Law
 
-IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+**LOAD THE SKILL BEFORE THE ACTION.** If there is even a 1% chance a skill applies, invoke it. Do not pass go. Do not collect context. Do not explore the codebase first. Skill check comes before everything — including clarifying questions.
 
-This is not negotiable. This is not optional. You cannot rationalize your way out of this.
-</EXTREMELY-IMPORTANT>
+## How AutoPowers works
 
-## Instruction Priority
+Every session starts with this bootstrap injected into your context. It tells you what's available and when to use it. From there:
 
-1. **User's explicit instructions** (CLAUDE.md, AGENTS.md, direct requests) — highest priority
-2. **Regent skills** — override default system behavior where they conflict
+- **User states a goal?** Load the orchestrator skill. It runs a 5-phase pipeline: clarify → plan → execute → verify → report.
+- **User asks a specific operation?** Use the tools directly. `delegate()` for single tasks, `delegate_many()` for parallel work, `research()` for parallel research, `explore()` for codebase analysis, `verify()` for compliance checks.
+- **Bug or unexpected behavior?** Load the diagnose skill. No fixes without root cause.
+- **Feature or bugfix involving code?** Load the tdd skill. No production code without a failing test first.
+- **Work claimed complete?** Load the verification-before-completion skill. No claims without fresh evidence.
+- **Complex multi-step task outlined in a plan?** Load the subagent-driven-development skill. Fresh subagent per task, two-stage review.
+- **Unfamiliar code area?** Load the zoom-out skill for broader context.
+- **Design unknown?** Load the prototype skill to answer questions before committing.
+
+## Priority
+
+1. **User's explicit instructions** (CLAUDE.md, AGENTS.md, direct requests) — always highest
+2. **AutoPowers skills** — override default system behavior where they conflict
 3. **Default system prompt** — lowest priority
 
-User instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+When loading multiple skills: **process skills first** (orchestrator, diagnose, zoom-out), **implementation skills second** (tdd, prototype).
 
-## The Rule
+## Skill Catalog
 
-Skill check comes BEFORE any response or action. Even a 1% chance a skill or tool might apply means you check first. If it turns out to be wrong for the situation, you don't need to use it.
+| Skill | Load When | What It Does |
+|-------|-----------|--------------|
+| `orchestrator` | User states a goal | 5-phase pipeline: clarify → plan → execute → verify → report |
+| `tdd` | Writing any production code | Red-green-refactor with iron law: failing test before code |
+| `diagnose` | Bug, failure, unexpected behavior | 6-phase investigation: loop → reproduce → hypothesise → instrument → fix → cleanup |
+| `verification-before-completion` | About to claim "done" | Evidence gate: fresh verification before any completion claim |
+| `subagent-driven-development` | Complex multi-step task | Fresh subagent per task + spec review + quality review |
+| `prototype` | Design unknown, need to explore | Throwaway code that answers a question (logic or UI branch) |
+| `zoom-out` | Unfamiliar code section | Broader context: file structure, dependencies, data flow |
 
-```dot
-digraph skill_flow {
-    "User message received" [shape=doublecircle];
-    "Might any skill apply?" [shape=diamond];
-    "Invoke skill tool" [shape=box];
-    "User states a goal?" [shape=diamond];
-    "Load orchestrator skill" [shape=box];
-    "Use tools directly or follow skill" [shape=box];
-    "Respond" [shape=doublecircle];
+## Tool Catalog
 
-    "User message received" -> "Might any skill apply?";
-    "Might any skill apply?" -> "Invoke skill tool" [label="yes, even 1%"];
-    "Might any skill apply?" -> "User states a goal?" [label="definitely not"];
-    "Invoke skill tool" -> "User states a goal?";
-    "User states a goal?" -> "Load orchestrator skill" [label="yes"];
-    "User states a goal?" -> "Use tools directly or follow skill" [label="no"];
-    "Load orchestrator skill" -> "Respond";
-    "Use tools directly or follow skill" -> "Respond";
-}
-```
+| Tool | What It Does | When |
+|------|-------------|------|
+| `delegate(task, context, expected_output)` | Single focused subagent | Well-defined independent task |
+| `delegate_many([{id, task, context, expected_output}])` | Parallel subagents | Multiple independent tasks |
+| `research([{id, question, scope?}])` | Parallel research agents | Need information from multiple angles |
+| `explore(query, focus?)` | Codebase analysis | Need to understand project structure |
+| `verify(requirements, implementation_context)` | Compliance check | Need to confirm work meets requirements |
+
+## Command Catalog
+
+| Command | Routes To | Purpose |
+|---------|-----------|---------|
+| `/orchestrate` | orchestrator skill | Full pipeline from goal to shipped |
+| `/delegate` | delegate tool | Single subagent task |
+| `/research` | research tool | Parallel research |
+| `/tdd` | tdd skill | Red-green-refactor cycle |
+| `/diagnose` | diagnose skill | Systematic debugging |
+| `/verify` | verification-before-completion skill | Evidence gate |
 
 ## Red Flags
 
-These thoughts mean STOP — you're rationalizing:
+These are rationalizations that mean STOP. You are about to skip the skill check:
 
 | Thought | Reality |
 |---------|---------|
 | "This is just a simple question" | Questions are tasks. Check for skills. |
-| "I need more context first" | Skill check comes BEFORE clarifying questions. |
-| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I need context before deciding" | Skills tell you how to gather context. Check first. |
+| "Let me explore the codebase first" | Skill check comes before exploration. |
 | "This doesn't need a formal skill" | If a skill exists, use it. |
-| "I remember this skill" | Skills evolve. Read current version. |
-| "I'll just do this one thing first" | Check BEFORE doing anything. |
-| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "The skill is overkill for this" | The skills exist because the alternative is worse. |
+| "I'll just do this one thing first" | No. Check first. |
+| "I remember what the skill says" | Skills evolve. Read the current version. |
+| "This feels productive" | Undisciplined action is waste. Skills prevent this. |
 
-## Loadable Skills
+## OpenCode Tool Mapping
 
-Regent ships with these skills. Load them when relevant:
-
-| Skill | When to Load |
-|-------|-------------|
-| `orchestrator` | User states a goal — 5-phase pipeline |
-| `tdd` | Writing implementation code — red-green-refactor |
-| `diagnose` | Bug, test failure — feedback loop debugging |
-| `verification-before-completion` | Before claiming work done — evidence gate |
-
-## Tool Catalog
-
-Regent registers 5 custom tools:
-
-| Tool | When to Use |
-|------|-------------|
-| `delegate` | One well-defined task for one subagent |
-| `delegate_many` | Multiple independent tasks — runs them in parallel |
-| `research` | Investigate questions, technologies, or approaches |
-| `explore` | Understand codebase structure before planning |
-| `verify` | Check implementation against requirements |
-
-## Commands
-
-| Command | What it does |
-|---------|-------------|
-| `/orchestrate <goal>` | Full 5-phase pipeline (clarify → plan → execute → verify → report) |
-| `/delegate <task>` | Quick one-off delegation to a subagent |
-| `/research <topic>` | Parallel research via subagents |
-| `/tdd <feature>` | TDD red-green-refactor cycle |
-| `/diagnose <symptom>` | Systematic debugging with feedback loop |
-| `/verify <scope>` | Compliance check against requirements |
-
-## Orchestrator vs Direct Tools
-
-If the user states a goal ("build X", "create Y", "implement Z"), load the orchestrator skill. It handles the full pipeline.
-
-If the user asks for one specific operation ("delegate this task", "research this topic"), use the tools directly.
-
-## Tool Mapping for OpenCode
-
-When skills reference tools from other platforms:
-- `TodoWrite` → `todowrite`
-- `Task` → `task` (OpenCode's task tool)
-- `Read`, `Write`, `Edit`, `Bash` → Your native tools
-
-Use OpenCode's native `skill` tool to list and load skills.
+| Claude Code Tool | OpenCode Equivalent |
+|-----------------|-------------------|
+| `TodoWrite` | `todowrite` |
+| `Task` with subagents | `delegate` / `delegate_many` |
+| `Skill` | `skill` |
+| `Read`, `Write`, `Edit`, `Bash` | Native tools (same names) |

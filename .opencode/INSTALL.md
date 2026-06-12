@@ -1,76 +1,40 @@
-# Installing Regent
+# Installation
 
-## Prerequisites
-
-- [OpenCode](https://opencode.ai) installed
-
-## Install
-
-Add regent to your `opencode.json` (global at `~/.config/opencode/opencode.json` or project-level):
+## Add to opencode.json
 
 ```json
 {
-  "plugin": ["regent@git+https://github.com/nathwn12/regent.git"]
+  "plugin": "https://github.com/nathwn12/regent.git"
 }
 ```
 
-Restart OpenCode. The plugin installs automatically through OpenCode's plugin manager.
-
-Verify by stating a goal:
-
-```
-I want to build a CLI tool that watches a directory and auto-formats new files.
-```
-
-The agent should load the orchestrator skill and begin clarifying — not jump into code.
-
-## Updating
+## Pin a version
 
 ```json
 {
-  "plugin": ["regent@git+https://github.com/nathwn12/regent.git#v2.0.0"]
+  "plugin": "https://github.com/nathwn12/regent.git#v2.0.0"
 }
 ```
 
-Pin to a specific commit or tag with `#ref` syntax. To update to the latest, remove the `#ref` and restart OpenCode.
+## Verify
 
-If updates don't appear, clear OpenCode's package cache:
-
-```bash
-rm -rf ~/.cache/opencode/node_modules/regent
-```
+Start a new session. You should see the AutoPowers bootstrap message. Run `/orchestrate` to test.
 
 ## Troubleshooting
 
-### Plugin not loading
+**Plugin not loading:**
+- Check that `opencode.json` is valid JSON (comments not allowed)
+- Run `npm install --prefix .opencode` from the project root
+- Restart the OpenCode session
 
-1. Check logs: `opencode run --print-logs "hello" 2>&1 | grep -i regent`
-2. Verify the plugin line in your `opencode.json`
-3. Make sure you're running a recent version of OpenCode
+**Skills not found:**
+- Verify the skills directory path is correct in the plugin config
+- Skills should be at `skills/<name>/SKILL.md` relative to the repo root
 
-### Skills not found
+**Orchestrator not auto-triggering:**
+- The orchestrator loads on the `/orchestrate` command or when user states a goal
+- Make sure the bootstrap skill is injected (check first session message)
 
-1. Use the `skill` tool to list what's discovered
-2. Check that the plugin is loading (see above)
-
-### Orchestrator doesn't auto-trigger
-
-The bootstrap skill is injected into the first user message. If it doesn't appear:
-- Check if another plugin is conflicting with the messages.transform hook
-- Verify the skills directory is discoverable
-
-## Windows
-
-If git-backed plugin installs have issues, try:
-
-```powershell
-npm install regent@git+https://github.com/nathwn12/regent.git --prefix "$HOME\.config\opencode"
-```
-
-Then use the local path:
-
-```json
-{
-  "plugin": ["~/.config/opencode/node_modules/regent"]
-}
-```
+**Windows:**
+- Git-backed plugin installs may need `npm install --prefix .opencode` run manually
+- Paths use forward slashes in `opencode.json` even on Windows

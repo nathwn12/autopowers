@@ -1,166 +1,94 @@
----
-name: tdd
-description: Use when implementing any feature or bugfix, before writing implementation code
----
+# TDD
 
-# Test-Driven Development
-
-## Overview
-
-Write the test first. Watch it fail. Write minimal code to pass.
-
-**Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
-
-**Violating the letter of the rules is violating the spirit of the rules.**
+Test-driven development for AutoPowers. Applies to any feature implementation, refactoring, or bugfix that involves production code.
 
 ## The Iron Law
 
-```
-NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
-```
+**NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.**
 
-Write code before the test? Delete it. Start over.
-
-**No exceptions:**
-- Don't keep it as "reference"
-- Don't "adapt" it while writing tests
-- Don't look at it
-- Delete means delete
-
-Implement fresh from tests. Period.
+If you wrote production code before a test, delete it. Start over. No exceptions. Not "keep it as reference." Not "well, the test would be awkward." Not "this is different because it's simple." Delete it.
 
 ## Red-Green-Refactor
 
-### RED — Write Failing Test
+Each cycle tackles exactly one behavior. Do not batch behaviors into one cycle.
 
-Write one minimal test showing what should happen.
+### RED — Write one failing test
 
-```
-test('retries failed operations 3 times', async () => {
-  let attempts = 0;
-  const operation = () => {
-    attempts++;
-    if (attempts < 3) throw new Error('fail');
-    return 'success';
-  };
-  const result = await retryOperation(operation);
-  expect(result).toBe('success');
-  expect(attempts).toBe(3);
-});
-```
+- One behavior per test. Clear test name that describes the behavior.
+- Use real code where possible. Mock only at system boundaries: external APIs, databases, time, randomness.
+- Do NOT mock your own code, your own modules, or internal collaborators.
+- The test should demonstrate the API you wish you had.
 
-**Requirements:**
-- One behavior per test
-- Clear name describing behavior, not implementation
-- Real code (no mocks unless at system boundaries)
+### VERIFY RED — Mandatory
 
-### Verify RED — Watch It Fail
+Run the test. Watch it fail. Confirm:
+- The failure message matches what you expect ("expected X but got undefined", not "cannot read property of undefined")
+- It fails because the feature is missing, not because of a typo in the test itself
 
-**MANDATORY. Never skip.**
+**If you did not watch the test fail, you do not know whether it tests the right thing.**
 
-Confirm:
-- Test fails (not errors)
-- Failure message is expected
-- Fails because feature missing (not typos)
+### GREEN — Write minimal code to pass
 
-**Test passes?** You're testing existing behavior. Fix test.
+- Write the simplest, most direct code that makes the test pass.
+- No extra features. No YAGNI. No "while I'm here."
+- Duplication is acceptable at this stage. Refactor comes next.
 
-### GREEN — Minimal Code
+### VERIFY GREEN — Mandatory
 
-Write simplest code to pass the test.
+Run the test. Watch it pass. Confirm:
+- The new test passes
+- All existing tests still pass
 
-```
-async function retryOperation(fn) {
-  for (let i = 0; i < 3; i++) {
-    try { return await fn(); }
-    catch (e) { if (i === 2) throw e; }
-  }
-}
-```
+### REFACTOR — Clean up
 
-Don't add features, refactor other code, or "improve" beyond the test.
+- Remove duplication. Extract helpers. Improve names.
+- Keep tests green throughout.
+- If refactoring breaks a test, you changed behavior, not structure.
 
-### Verify GREEN — Watch It Pass
+## Anti-pattern: Horizontal slices
 
-**MANDATORY.**
+Do NOT write all tests first and then implement. That is not TDD — it's test-after with extra steps. You lose the feedback loop that makes TDD valuable. Each test validates the specific code you just wrote. Write one test. Make it pass. Write the next test. One behavior at a time.
 
-Confirm:
-- Test passes
-- Other tests still pass
-- Output pristine (no errors, warnings)
+## Good tests
 
-### REFACTOR — Clean Up
+| Property | What it means |
+|----------|--------------|
+| **Minimal** | Tests exactly one thing. If it fails, you know what broke. |
+| **Clear** | Test name = behavior description. Reader knows intent without reading the body. |
+| **Shows intent** | Demonstrates the desired API. Callers read tests as documentation. |
 
-After green only:
-- Remove duplication
-- Improve names
-- Extract helpers
+## When to mock
 
-Keep tests green. Don't add behavior.
-
-## Anti-Pattern: Horizontal Slices
-
-**DO NOT write all tests first, then all implementation.**
+Only at **system boundaries**: the seam where your code meets something you don't control.
 
 ```
-WRONG (horizontal):
-  RED:   test1, test2, test3, test4, test5
-  GREEN: impl1, impl2, impl3, impl4, impl5
-
-RIGHT (vertical):
-  RED->GREEN: test1->impl1
-  RED->GREEN: test2->impl2
-  RED->GREEN: test3->impl3
+YOUR CODE → [ Mock Here ] → External API
+YOUR CODE → [ Mock Here ] → Database
+YOUR CODE → [ Mock Here ] → Time / Randomness
 ```
 
-Tests written in bulk test imagined behavior, not actual behavior. One test → one implementation → repeat.
+Do NOT mock:
+- Your own functions, classes, or modules
+- Internal collaborators within the same module
+- Code you own and control
+
+## Red Flags
+
+| Behavior | Problem |
+|----------|---------|
+| Writing implementation before test | Violates Iron Law. Delete it. |
+| Writing all tests then all code | Horizontal slices. Not TDD. |
+| Test passes immediately | You wrote a test for existing code. That's test-after. |
+| Can't think of how to test | Write the API you wish you had. The test shapes the design. |
+| Mocking everything | Your code is too coupled. Simplify. |
+| "Let me skip verification" | Skipping verification voids the guarantee. |
 
 ## Rationalization Prevention
 
-| Rationalization | Reality |
-|----------------|---------|
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests passing immediately prove nothing. |
-| "Already manually tested" | Ad-hoc ≠ systematic. No record, can't re-run. |
-| "Deleting X hours is wasteful" | Sunk cost fallacy. Keeping unverified code is technical debt. |
-| "TDD will slow me down" | TDD is faster than debugging. Pragmatic = test-first. |
-
-## Red Flags — STOP and Start Over
-
-- Code before test
-- Test after implementation
-- Test passes immediately
-- "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "Keep as reference" or "adapt existing code"
-
-**All of these mean: Delete code. Start over with TDD.**
-
-## Good Tests
-
-| Quality | Good | Bad |
-|---------|------|-----|
-| **Minimal** | One thing. "and" in name? Split it. | `test('validates email and domain and whitespace')` |
-| **Clear** | Name describes behavior | `test('test1')` |
-| **Shows intent** | Demonstrates desired API | Obscures what code should do |
-
-## When to Mock
-
-Mock at **system boundaries** only:
-- External APIs (payment, email, etc.)
-- Databases (sometimes — prefer test DB)
-- Time/randomness
-
-Don't mock:
-- Your own classes/modules
-- Internal collaborators
-- Anything you control
-
-## Final Rule
-
-```
-Production code → test exists and failed first
-Otherwise → not TDD
-```
-
-No exceptions without user's permission.
+| Excuse | Reality |
+|--------|---------|
+| "I'll just write the code first as a reference" | The reference becomes the implementation. Delete it. |
+| "This is too simple to need TDD" | Simple things have hidden edge cases. TDD finds them. |
+| "I'm being pragmatic" | "Pragmatic" = rationalization for skipping discipline. |
+| "Deleting the code is wasteful" | Keeping untested code is more wasteful. You'll debug it later. |
+| "The test is obvious, I don't need to see it fail" | You do. Always. |

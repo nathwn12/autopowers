@@ -1,16 +1,17 @@
 ---
-description: Verify work against requirements — evidence gate
+description: Verification evidence gate — fresh proof before any completion claim
 subtask: true
 ---
 
-The user wants to verify work:
+The user wants to verify:
 $ARGUMENTS
 
-Load the `verification-before-completion` skill.
+Load the `verification-before-completion` skill. The Iron Law applies: NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE.
 
-1. Identify what command or check proves success
-2. Run the FULL verification command
-3. Read the output — check exit code, failures
-4. Only THEN claim the result
+1. IDENTIFY — what command proves the claim?
+2. RUN — execute the full command (fresh, complete)
+3. READ — full output, exit code, failure count
+4. VERIFY — does output confirm the claim?
+5. ONLY THEN — make the claim
 
-No completion claims without fresh verification evidence.
+No "should", "probably", "seems fine". Fresh evidence or it did not happen.

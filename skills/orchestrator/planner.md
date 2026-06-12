@@ -1,65 +1,54 @@
-You are in the PLAN phase. Decompose the clarified goal into concrete, executable tasks.
+# Plan Phase
 
-## Process
+Detailed process for Phase 2 of the orchestrator pipeline. Turns a validated design into an executable task plan.
 
-1. **Scan available skills** — review the `available_skills` in your system prompt. For each skill whose description matches the task, load it with the `skill` tool. Its instructions become part of your plan.
-2. Call `explore()` if you need to understand the existing codebase structure.
-3. Call `research()` if technology decisions need investigation.
-4. Break the goal into tasks.
+## 1. Scan available skills
 
-## Task Granularity
+Check which loaded skills match the task. Load any additional skills that apply:
+- TDD for code implementation
+- Diagnose for bug investigation
+- Prototype for design exploration
 
-- Each task touches 1-3 files
-- Each task takes 2-15 minutes for a subagent
-- Each task has a clear "done" definition
-- Prefer many thin tasks over few thick ones
+## 2. Gather intelligence
 
-## Task Structure (for each task)
+Use the available tools before constructing the plan:
+- `explore()` to understand the files and modules that will be touched
+- `research()` for technology choices, library APIs, or patterns
+- `delegate()` for deep dives into specific subsystems
 
-Every task must include:
+## 3. Build the task plan
 
-- **Files** — exact paths for create/modify/test
-- **Steps** — bite-sized (1 action per step, 2-5 minutes each)
-- **Code** — complete code in every step. No placeholders.
-- **Commands** — exact commands with expected output
-- **Test strategy** — what behavior to test and how
+Each task must have:
+- **File scope** — 1-3 files maximum. If more are needed, split the task.
+- **Time estimate** — 2-15 minutes per task. If it's longer, split it.
+- **Clear "done" definition** — what the task produces and how to verify it.
+- **Dependency level** — which tasks can run in parallel (Level 1) vs sequentially (Level N).
 
-**No placeholders allowed:**
-- No "TBD", "TODO", "implement later"
-- No "add appropriate error handling" without showing the handling
-- No "write tests for the above" without actual test code
-- No references to types or functions not defined in any task
-
-## Dependency Mapping
+### Dependency mapping
 
 ```
-Level 1 (no deps) ──→ delegate_many([A, B, C])  ← parallel
-Level 2 (deps on 1) ──→ delegate([D]) or delegate_many([D, E])
-Level 3 (deps on 2) ──→ delegate([F])
+Level 1 (no deps, parallel):          Level 2 (deps on L1, sequential):
+  A. Define types                        C. Implement service
+  B. Write test stubs                    D. Wire up endpoints
 ```
 
-Identify:
-- Tasks with no dependencies → parallel-safe, use `delegate_many()`
-- Tasks that depend on previous level → sequential, use `delegate()`
-- Tasks that share the same dependency → can still be parallel within their level
+- Level 1 tasks → `delegate_many()` for parallel execution
+- Level N tasks → `delegate()` sequentially after dependencies resolve
 
-## Output Format
+### No placeholders
 
-```
-Phase 1: Foundation — parallel-safe
-├── Task A: Set up project scaffold → delegate_many([A, B])
-├── Task B: Configure build tooling
+Every step must be concrete: exact file paths, exact function names, exact commands to run. No:
+- "Add appropriate error handling" (which errors? where?)
+- "Write tests for the above" (which tests? what scenarios?)
+- "Implement later" (when later never comes)
 
-Phase 2: Core Logic — depends on Phase 1
-├── Task C: Implement data model → delegate([C])
-└── Task D: Implement API routes → delegate_many([D, E]) (parallel, both depend on C)
+If a step is not specific enough to delegate to a subagent, it is not a step.
 
-Phase 3: Integration — depends on Phase 2
-└── Task F: Wire frontend to API → delegate([F])
-```
+## 4. Gate
 
-## Gate
+Present the plan to the user. Include:
+- The task tree with dependency levels
+- Parallelization strategy
+- Files that will be created/modified
 
-Present the plan to the user with all tasks, dependencies, and parallelization. Ask for approval before executing.
-
-Do NOT move to execute until the user approves.
+Ask: "Does this plan look right?" Do not proceed without approval.

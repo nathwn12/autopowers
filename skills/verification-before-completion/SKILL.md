@@ -1,97 +1,75 @@
----
-name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs
----
-
 # Verification Before Completion
 
-## Overview
-
-Claiming work is complete without verification is dishonesty, not efficiency.
-
-**Core principle:** Evidence before claims, always.
-
-**Violating the letter of this rule is violating the spirit of this rule.**
+Evidence gate for AutoPowers. Apply before any claim of completion, success, or readiness to proceed.
 
 ## The Iron Law
 
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
+**NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE.**
 
-If you haven't run the verification command in this message, you cannot claim it passes.
+Fresh means run right now, not "it was working earlier." Verification means you have the output in front of you, not "I remember it passing." Evidence means test output showing 0 failures, not "seems fine."
 
 ## The Gate Function
 
-```
-BEFORE claiming any status:
+### 1. IDENTIFY
 
-1. IDENTIFY: What command proves this claim?
-2. RUN: Execute the FULL command (fresh, complete)
-3. READ: Full output, check exit code, count failures
-4. VERIFY: Does output confirm the claim?
-   - If NO: State actual status with evidence
-   - If YES: State claim WITH evidence
-5. ONLY THEN: Make the claim
+What command proves the claim?
+- "Tests pass" → requires test output showing 0 failures
+- "Linter clean" → requires linter output showing 0 errors
+- "Build succeeds" → requires build command with exit code 0
+- "Bug is fixed" → requires the original reproducing scenario to pass
+- "Feature is complete" → requires the acceptance criteria to be met
 
-Skip any step = lying, not verifying
-```
+### 2. RUN
+
+Execute the full command. Not a subset. Not "the relevant tests." Not a dry run. The actual command that proves the claim.
+
+### 3. READ
+
+Read the full output. Check the exit code. Count failures, errors, warnings, and any unexpected output.
+
+### 4. VERIFY
+
+Does the output confirm the claim?
+- Tests: "Tests: 12 passed, 0 failed" → verified
+- Linter: "No errors found" → verified
+- Build: exit code 0 → verified
+
+### 5. CLAIM
+
+Only now may you say it works, it's done, or proceed to the next step.
 
 ## Common Failures
 
-| Claim | Requires | Not Sufficient |
-|-------|----------|----------------|
-| Tests pass | Test output: 0 failures | Previous run, "should pass" |
-| Linter clean | Linter output: 0 errors | Partial check |
-| Build succeeds | Build command: exit 0 | Linter passing |
-| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
-| Requirements met | Line-by-line checklist | Tests passing |
+| Claim | Required Evidence | Not Sufficient |
+|-------|-------------------|----------------|
+| Tests pass | Full test output: "X passed, 0 failed" | "All tests should pass now" |
+| Linter clean | Linter output: "0 errors, 0 warnings" | "I fixed the lint issues" |
+| Build succeeds | Build command exit code 0 | "Build was working earlier" |
+| Bug fixed | Original repro scenario passes | "I changed the relevant code" |
+| Feature complete | Acceptance criteria met, one by one | "I implemented the main parts" |
+| Coverage sufficient | Coverage report above threshold | "I added tests for the new code" |
 
-## Red Flags — STOP
+## Red Flags
 
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!")
-- About to commit/push/PR without verification
-- Trusting agent success reports without checking
-- Relying on partial verification
-- Thinking "just this once"
-- **ANY wording implying success without having run verification**
+| Says | Actually Means |
+|------|---------------|
+| "should pass now" | Not verified |
+| "probably works" | Not verified |
+| "seems correct" | Not verified |
+| "I think it's fixed" | Not verified |
+| "it was working before" | Not fresh evidence |
+| "the tests look right" | Not run |
+| "the change is trivial" | Most likely to break something |
+| "just this once" | The exception that proves the rule |
 
-## Rationalization Prevention
+## When to apply
 
-| Excuse | Reality |
-|--------|---------|
-| "Should work now" | RUN the verification |
-| "I'm confident" | Confidence ≠ evidence |
-| "Just this once" | No exceptions |
-| "Linter passed" | Linter ≠ compiler |
-| "Agent said success" | Verify independently |
-| "Different words so rule doesn't apply" | Spirit over letter |
+- Before saying "it works"
+- Before saying "it's done" 
+- Before committing
+- Before creating a PR
+- Before marking a task complete
+- Before moving to the next task
+- Before expressing satisfaction with results
 
-## Key Patterns
-
-**Tests:**
-```
-✅ [Run test command] [See: 34/34 pass] "All tests pass"
-❌ "Should pass now"
-```
-
-**Regression tests (TDD):**
-```
-✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
-❌ "I've written a regression test" (without red-green verification)
-```
-
-**Requirements:**
-```
-✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
-❌ "Tests pass, phase complete"
-```
-
-## The Bottom Line
-
-**No shortcuts for verification.**
-
-Run the command. Read the output. THEN claim the result.
-
-This is non-negotiable.
+Every time. No exceptions. No shortcuts. Fresh evidence or it did not happen.

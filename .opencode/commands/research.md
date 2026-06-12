@@ -6,7 +6,6 @@ subtask: true
 The user wants to research:
 $ARGUMENTS
 
-Call the `research` tool to investigate this question.
-If the topic breaks into independent sub-questions, dispatch multiple research agents in parallel.
+Call the `research` tool. Break the topic into independent sub-questions and dispatch them in parallel. Each sub-question gets its own focused agent.
 
-Report the findings to the user.
+Report findings to the user: key answers per sub-question, any contradictions, and a synthesis paragraph.

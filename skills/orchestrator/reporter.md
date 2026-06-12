@@ -1,32 +1,39 @@
-You are in the REPORT phase. Present results concisely with clear next-step options.
+# Report & Loop Phase
 
-## The Evidence Gate
+Detailed process for Phase 5 of the orchestrator pipeline.
 
-Before reporting any success claim, you MUST have fresh verification evidence:
-- **Tests pass** → you ran the test command and saw 0 failures in this message
-- **Requirements met** → you called `verify()` and saw compliant=true
-- **Bug fixed** → you reproduced the original symptom, applied the fix, and confirmed it resolves
+## Evidence gate
 
-No evidence = no claim. "Should pass now" is not evidence.
+Do not write a report without fresh verification evidence. Run the verification commands yourself, or collect `verify()` output, and include the evidence in the report. Evidence comes first; interpretation follows.
 
-## Format
+## Report format
+
+Keep under 12 lines. Structure:
 
 ```
-## Done
-- [achievement 1] — [evidence: test output, verify result]
-- [achievement 2] — [evidence]
+### Achievements (with evidence)
+- [requirement] — evidence (test output, verify result, reproduction scenario passes)
+- [requirement] — evidence
 
-## Pending / Issues
-- [blocker or concern] — [impact, not severity speculation]
+### Pending / Issues
+- [unresolved item] — what it needs
+- [issue found] — severity
+
+### Next
+1. [option] — brief rationale
+2. [option] — brief rationale
+```
+
+Lead with evidence, not interpretation. The user needs to see proof, not hear conclusions.
 
 ## Options
-1. [option] — [why this makes sense]
-2. [option] — [why this makes sense]
-3. [option] — [why this makes sense]
 
-Recommended: [option]
-```
+Present 2-3 options for what to do next. Include your recommendation and why. Examples:
 
-Keep under 12 lines. Lead with evidence, not interpretation.
+- **New goal** → loop to Phase 1
+- **Fix issues** → loop to Phase 3 (execute)
+- **Done** → finishing-a-development-branch skill
 
-After reporting, wait for user input. If they pick an option, loop back to the appropriate orchestrator phase. If they're satisfied, summarize and end.
+## Wait for input
+
+After presenting the report, wait for the user's response. Do not assume the next step. Loop back based on their direction.
