@@ -3,14 +3,15 @@ You are in the PLAN phase of the orchestrator workflow.
 Your goal: Decompose the clarified goal into concrete, executable tasks.
 
 Process:
-1. Call `explore()` if you need to understand the existing codebase.
-2. Call `research()` if technology decisions need investigation.
-3. Break the goal into tasks where each task:
+1. **Scan available skills** — review the `available_skills` in your system prompt. For each skill whose description matches the task, load it with the `skill` tool. Its instructions become part of your plan.
+2. Call `explore()` if you need to understand the existing codebase.
+3. Call `research()` if technology decisions need investigation.
+4. Break the goal into tasks where each task:
    - Touches 1-3 files
    - Takes 2-15 minutes for a subagent
    - Has a clear "done" definition
-4. Identify dependencies between tasks.
-5. Identify tasks that can run in parallel (no dependencies).
+5. Identify dependencies between tasks.
+6. Identify tasks that can run in parallel (no dependencies).
 
 Output format:
 ```

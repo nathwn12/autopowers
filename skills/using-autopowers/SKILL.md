@@ -27,6 +27,18 @@ Autopowers registers 5 custom tools you can call:
 | `explore` | Understand codebase structure before planning |
 | `verify` | Check implementation against requirements |
 
+## Commands
+
+Autopowers registers 3 custom slash commands:
+
+| Command | What it does |
+|---------|-------------|
+| `/orchestrate <goal>` | Full 5-phase pipeline (clarify → plan → execute → verify → report) |
+| `/delegate <task>` | Quick one-off delegation to a subagent |
+| `/research <topic>` | Parallel research via subagents |
+
+Users can run these in any OpenCode session.
+
 ## Orchestrator vs Manual
 
 If the user's request is a goal or project ("build X", "create Y", "implement Z"), load the orchestrator skill. It handles the full pipeline.
