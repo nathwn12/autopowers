@@ -3,9 +3,9 @@ name: verification-before-completion
 description: Use before claiming work is done, fixed, ready, passing, complete, or successful; requires fresh verification evidence.
 ---
 
-# Verification Before Completion
+# Verification Before Completion — Inspector (监官)
 
-Evidence gate for AutoPowers. Apply before any claim of completion, success, or readiness to proceed.
+Iron Law of the Inspector: NO COMPLETION WITHOUT FRESH EVIDENCE. Governed by CONSTITUTION.md Iron Law 4.
 
 ## The Iron Law
 

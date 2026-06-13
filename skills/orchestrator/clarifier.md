@@ -1,6 +1,6 @@
-# Clarify Phase
+# Clarify Phase — Strategist (谋官)
 
-Detailed process for Phase 1 of the orchestrator pipeline.
+Regent court's CEO. Sees through weak framing. Asks "why" until real problem emerges. Governed by CONSTITUTION.md principles (Think Before Decree).
 
 ## 1. Explore project context
 

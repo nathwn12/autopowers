@@ -3,86 +3,92 @@ name: orchestrator
 description: Use when the user states a goal and Regent should run clarify, plan, execute, verify, and report.
 ---
 
-# Orchestrator
+# Orchestrator — Court Concierge
 
-The AutoPowers orchestration engine. Runs a 5-phase pipeline that takes a stated goal and produces shipped, verified work. Each phase has a gate: do not proceed without passing it.
+Convenes the right minister for each phase. constitution at `CONSTITUTION.md` defines who serves when. Chain of command:
+
+```
+Sovereign → Strategist → Architect → Fleet Commander + Inspector → Publisher
+                                                                      ↘ Mentor (any time)
+```
+
+Each phase gated. No gate bypass.
 
 ## Domain awareness
 
-Before any phase, check for domain documentation:
+Before any phase, check domain documentation:
 
-- `CONTEXT.md` at repo root? Read it. It defines the project's vocabulary.
-- `docs/adr/` exists? Read relevant ADRs. They record decisions you should not relitigate.
+- `CONSTITUTION.md` at repo root? Read it. Defines Regent identity, court roles, iron laws.
+- `CONTEXT.md` at repo root? Read it. Defines project vocabulary.
+- `docs/adr/` exists? Read relevant ADRs. Records decisions not to relitigate.
 - `UBIQUITOUS_LANGUAGE.md` exists? Read it. Use its terms precisely.
-- **Use the project's domain language** in every plan, every file name, every variable. If the project calls it "Order" not "Purchase", you say "Order".
+- **Use project domain language** in every plan, file name, variable.
 
-Create these files lazily: CONTEXT.md when you resolve a term, `docs/adr/` when you make a decision.
+Create files lazily: CONTEXT.md when you resolve a term, `docs/adr/` when you make a decision.
 
 ## The 5 Phases
 
-### Phase 1 — Clarify
+### Phase 1 — Clarify (Strategist 谋官)
 
-Load `clarifier.md` and run its process. Outcome: a validated design with user approval, saved to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`.
+Load `clarifier.md`. Role: Strategist. Outcome: validated design, saved to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`.
 
-**Gate:** Do not proceed to Phase 2 without user confirmation on the design.
+**Gate:** No Phase 2 without user confirmation.
 
-### Phase 2 — Plan
+### Phase 2 — Plan (Architect 构官)
 
-Load `planner.md` and run its process. Outcome: a task plan with dependency levels for parallel execution.
+Load `planner.md`. Role: Architect. Outcome: task plan with dependency levels for parallel execution.
 
-**Gate:** Do not proceed to Phase 3 without user approval of the plan.
+**Gate:** No Phase 3 without user approval.
 
-### Phase 3 — Execute
+### Phase 3 — Execute (Fleet Commander 舰官)
 
-Walk the dependency graph:
+Walk dependency graph:
 
-- **Level 1 tasks** (no dependencies) → `delegate_many()` for parallel execution
-- **Level N tasks** (depend on Level 1) → `delegate()` sequentially after prior level completes
+- **Level 1** (no deps) → `delegate_many()` parallel
+- **Level N** (deps on prior) → `delegate()` sequential
 
-Per-task result handling:
+Result handling:
 
-| Status               | Action                                        |
-| -------------------- | --------------------------------------------- |
-| `done`               | Continue. Mark complete.                      |
-| `done_with_concerns` | Note the concern. Continue unless critical.   |
-| `needs_context`      | Provide context, re-delegate.                 |
-| `blocked`            | PAUSE. Assess. Escalate to user if uncertain. |
+| Status               | Action                                      |
+| -------------------- | ------------------------------------------- |
+| `done`               | Continue. Mark complete.                    |
+| `done_with_concerns` | Note concern. Continue unless critical.     |
+| `needs_context`      | Provide context, re-delegate.               |
+| `blocked`            | PAUSE. Assess. Escalate to user.            |
 
-Partial failure handling:
+Partial failure:
 
-- **Non-critical task fails:** Note it, continue. Don't block the whole pipeline.
-- **Critical task fails:** Retry once. If it fails again, PAUSE and escalate.
+- **Non-critical:** Note, continue.
+- **Critical:** Retry once. Fail again → PAUSE, escalate.
 
-**Gate:** All tasks must resolve before Phase 4.
+**Gate:** All tasks resolve before Phase 4.
 
-### Phase 4 — Verify
+### Phase 4 — Verify (Inspector 监官)
 
 Call `verify()` with:
 
-- `requirements` = captured during Clarify phase
-- `implementation_context` = summary of what was built from Phase 3
+- `requirements` = captured during Clarify
+- `implementation_context` = summary from Phase 3
 
-Decision tree:
+Decision:
 
-- **Compliant** → proceed to Phase 5
-- **Minor issues** → fix and re-verify
-- **Major issues** → PAUSE, escalate to user
+- **Compliant** → Phase 5
+- **Minor issues** → fix, re-verify
+- **Major issues** → PAUSE, escalate
 
-Use `delegate()` to dispatch verifiers for each requirement if the scope is large.
+Delegate verifiers per requirement if scope large. Fresh command output or repro evidence required before Phase 5.
 
-`verify()` checks spec compliance; fresh command output, repro evidence, or inspection evidence is still required before Phase 5.
+**Gate:** Fresh verification evidence required.
 
-**Gate:** Fresh verification evidence required before Phase 5.
+### Phase 5 — Report & Loop (Publisher 布官)
 
-### Phase 5 — Report & Loop
+Load `reporter.md`. Role: Publisher. Outcome: structured report to user.
 
-Load `reporter.md` and run its process. Outcome: structured report presented to user.
+Loop:
 
-Loop back based on user response:
-
-- **New goal** → return to Phase 1
-- **Fix issues** → return to Phase 3
-- **Done** → present completion summary, ask user if they want to commit/PR
+- **New goal** → Phase 1
+- **Fix issues** → Phase 3
+- **Done** → ask: commit or PR?
 
 ## Rationalization Prevention
 

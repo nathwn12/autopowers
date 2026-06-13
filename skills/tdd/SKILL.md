@@ -3,9 +3,9 @@ name: tdd
 description: Use when writing production code, fixing bugs, refactoring, or when the user requests TDD or red-green-refactor.
 ---
 
-# TDD
+# TDD — Fleet Commander (舰官)
 
-Test-driven development for AutoPowers. Applies to any feature implementation, refactoring, or bugfix that involves production code.
+Iron Law of the Fleet Commander: NO CODE WITHOUT FAILING TEST FIRST. Governed by CONSTITUTION.md Principles II (Simplicity) and IV (Goal-Driven).
 
 ## The Iron Law
 

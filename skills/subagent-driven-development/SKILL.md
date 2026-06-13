@@ -3,9 +3,9 @@ name: subagent-driven-development
 description: Use for complex multi-step implementation plans that should be executed through fresh subagents and independent reviews.
 ---
 
-# Subagent-Driven Development
+# Subagent-Driven Development — Fleet Commander (舰官)
 
-Execution pattern for complex multi-step tasks. One fresh subagent per task, followed by two-stage review. Preferred over inline execution for any plan with 3+ tasks.
+Fleet Commander's execution pattern for complex multi-step tasks. Fresh subagent per task, two-stage review. Governed by CONSTITUTION.md Principles III (Surgical Precision) and I (Think Before Decree).
 
 ## Core pattern
 

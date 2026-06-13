@@ -3,9 +3,9 @@ name: prototype
 description: Use when design is unknown, the user wants a prototype, or a throwaway experiment should answer a logic or UI question.
 ---
 
-# Prototype
+# Prototype — Fleet Commander (舰官)
 
-Throwaway code that answers a question before you commit to building the real thing.
+Throwaway code that answers a question before committing to build. Fleet Commander's reconnaissance tool. Governed by CONSTITUTION.md Principle II (Simplicity is Sovereign).
 
 ## The principle
 

@@ -3,9 +3,9 @@ name: diagnose
 description: Use when the user reports a bug, failure, unexpected behavior, flaky behavior, or performance regression.
 ---
 
-# Diagnose
+# Diagnose — Inspector (监官)
 
-Systematic debugging for AutoPowers. For hard bugs, performance regressions, and any unexpected behavior.
+Iron Law of the Inspector: NO FIX WITHOUT ROOT CAUSE. Governed by CONSTITUTION.md Principle I (Think Before Decree).
 
 ## The Iron Law
 

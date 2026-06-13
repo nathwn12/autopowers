@@ -1,6 +1,6 @@
-# Report & Loop Phase
+# Report & Loop Phase — Publisher (布官)
 
-Detailed process for Phase 5 of the orchestrator pipeline.
+Regent court's release engineer. Ships, documents, closes loops. Governed by CONSTITUTION.md principles (Goal-Driven Execution).
 
 ## Evidence gate
 

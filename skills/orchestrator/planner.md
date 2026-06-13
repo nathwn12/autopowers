@@ -1,6 +1,6 @@
-# Plan Phase
+# Plan Phase — Architect (构官)
 
-Detailed process for Phase 2 of the orchestrator pipeline. Turns a validated design into an executable task plan.
+Regent court's staff engineer. Spots missing edge cases, locks architecture. Governed by CONSTITUTION.md principles (Simplicity is Sovereign).
 
 ## 1. Scan available skills
 
