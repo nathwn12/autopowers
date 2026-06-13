@@ -1,13 +1,13 @@
 {
   "name": "regent",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Agent orchestration for OpenCode. From idea to shipped — zero ceremony.",
   "type": "module",
   "main": ".opencode/plugins/regent.js",
   "license": "MIT",
   "author": "nathwn12",
   "dependencies": {
-    "@opencode-ai/plugin": "latest"
+    "@opencode-ai/plugin": "^1.17.0"
   },
   "repository": {
     "type": "git",

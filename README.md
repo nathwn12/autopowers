@@ -28,7 +28,7 @@ Every phase gated. No phase skip. Every claim has evidence.
 - `explore()` — codebase structure analysis
 - `verify()` — requirements compliance checking
 
-**8 skills** + **6 roles** governed by constitution:
+**7 skills** + **6 roles** governed by constitution:
 
 | Skill                            | Court Role           | Iron Law                       |
 | -------------------------------- | -------------------- | ------------------------------ |
@@ -36,7 +36,6 @@ Every phase gated. No phase skip. Every claim has evidence.
 | `tdd`                            | 舰官 Fleet Commander | NO CODE WITHOUT FAILING TEST   |
 | `diagnose`                       | 监官 Inspector       | NO FIX WITHOUT ROOT CAUSE      |
 | `verification-before-completion` | 监官 Inspector       | NO COMPLETION WITHOUT EVIDENCE |
-| `subagent-driven-development`    | 舰官 Fleet Commander | Fresh subagent per task        |
 | `prototype`                      | 舰官 Fleet Commander | Disposable by design           |
 | `zoom-out`                       | 教官 Mentor          | Start broad, then narrow       |
 | `using-regent`                   | All                  | Bootstrap identity             |
@@ -81,3 +80,16 @@ One plugin entry. No manual npm install. AutoPowers injects after OpenCode loads
 - **Evidence before claims.** Fresh verification or it did not happen.
 - **Human at decision points.** Design approval, plan approval, blockers — gates where the user decides.
 - **Zero ceremony.** One command to start. One plugin entry. No manual setup.
+
+## Example walkthrough
+
+1. Install: add `"regent@git+https://github.com/nathwn12/regent.git#v2.2.1"` to your `opencode.jsonc` plugins array.
+2. Start a new OpenCode session. Regent's bootstrap auto-injects the tool & command catalog.
+3. Type a goal: `Add dark mode toggle to settings panel`.
+4. Regent loads the orchestrator skill and runs:
+   - **Clarify** — asks what dark mode means (system preference? manual toggle?), where the settings panel lives, success criteria.
+   - **Plan** — explores the codebase, generates task tree (types → toggle component → persistence → tests).
+   - **Execute** — dispatches subagents in parallel via `delegate_many()` for independent tasks.
+   - **Verify** — runs `verify()` checking each requirement against implementation.
+   - **Report** — presents achievements with evidence, pending items, and next steps.
+5. Approve, adjust, or loop back. Three options: new goal, fix issues, or commit/PR.

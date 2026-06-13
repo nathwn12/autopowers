@@ -14,21 +14,36 @@ const parseFrontmatter = (content) => {
   if (!match) return {};
 
   const result = {};
+  let currentKey = null;
+  let currentValue = null;
+
   for (const line of match[1].split(/\r?\n/)) {
     const parsed = line.match(/^(\w+):\s*(.*)$/);
-    if (!parsed) continue;
+    if (parsed) {
+      if (currentKey !== null) {
+        result[currentKey] = currentValue;
+      }
+      currentKey = parsed[1];
+      currentValue = parsed[2].trim();
+    } else if (currentKey !== null && line.trim()) {
+      currentValue += ' ' + line.trim();
+    }
+  }
+  if (currentKey !== null) {
+    result[currentKey] = currentValue;
+  }
 
-    let value = parsed[2].trim();
-    if (value === 'true') value = true;
-    else if (value === 'false') value = false;
+  for (const [key, value] of Object.entries(result)) {
+    if (value === 'true') result[key] = true;
+    else if (value === 'false') result[key] = false;
     else if (
       (value.startsWith('"') && value.endsWith('"')) ||
       (value.startsWith("'") && value.endsWith("'"))
     ) {
-      value = value.slice(1, -1);
+      result[key] = value.slice(1, -1);
     }
-    result[parsed[1]] = value;
   }
+
   return result;
 };
 
@@ -37,8 +52,16 @@ const extractContent = (content) => {
   return match ? match[1] : content;
 };
 
+const log = (msg) => {
+  console.error(`[regent] ${msg}`);
+};
+
 const readMarkdownAssets = (dir) => {
   try {
+    if (!fs.existsSync(dir)) {
+      log(`directory not found: ${dir}`);
+      return [];
+    }
     return fs
       .readdirSync(dir, { withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
@@ -51,7 +74,8 @@ const readMarkdownAssets = (dir) => {
           body: extractContent(raw).trim(),
         };
       });
-  } catch {
+  } catch (err) {
+    log(`error reading ${dir}: ${err.message}`);
     return [];
   }
 };
@@ -122,12 +146,13 @@ ${content}
 
 // ── Shared subagent dispatch ─────────────────────────────────
 async function dispatchSubagent(client, task, context, expectedOutput, toolContext = {}) {
+  let session;
   try {
     const sessionResult = await client.session.create({
       ...(toolContext.directory ? { query: { directory: toolContext.directory } } : {}),
       body: { title: `regent: ${task.replace(/[^a-zA-Z0-9 ]/g, '').slice(0, 60)}` },
     });
-    const session = sessionResult.data ?? sessionResult;
+    session = sessionResult.data ?? sessionResult;
 
     const prompt = [
       `## Task`,
@@ -152,6 +177,7 @@ async function dispatchSubagent(client, task, context, expectedOutput, toolConte
       path: { id: session.id },
       ...(toolContext.directory ? { query: { directory: toolContext.directory } } : {}),
       body: {
+        agent: 'regent-general',
         parts: [{ type: 'text', text: prompt }],
       },
     });
@@ -163,11 +189,6 @@ async function dispatchSubagent(client, task, context, expectedOutput, toolConte
         .map((p) => p.text)
         .filter(Boolean)
         .join('\n') || '';
-
-    await client.session.delete({
-      path: { id: session.id },
-      ...(toolContext.directory ? { query: { directory: toolContext.directory } } : {}),
-    });
 
     let status = 'done';
     let output = responseText;
@@ -183,19 +204,35 @@ async function dispatchSubagent(client, task, context, expectedOutput, toolConte
         responseText.match(/CONCERN:.*$/gm)?.map((c) => c.replace('CONCERN:', '').trim()) || [];
     }
 
-    const filesChanged =
-      responseText
-        .match(/(?:^|\n)(?:[\w.\-/\\]+\.[a-zA-Z0-9]+)/gm)
-        ?.map((f) => f.trim())
+    const filesChanged = (() => {
+      const pathPattern = /(?:^|\n)(?:[\w.\-/\\]+\.[a-zA-Z0-9]+|[\w.\-]+(?:[\\/][\w.\-]+)+(?:\.[a-zA-Z0-9]+)?)/gm;
+      const matches = responseText.match(pathPattern);
+      return (matches || [])
+        .map((f) => f.trim())
         .filter(
           (f) =>
-            !f.startsWith('CONCERN:') && !f.startsWith('NEEDS_CONTEXT') && !f.startsWith('BLOCKED'),
+            !f.startsWith('CONCERN:') &&
+            !f.startsWith('NEEDS_CONTEXT') &&
+            !f.startsWith('BLOCKED') &&
+            !/^\d+\.\s/.test(f),
         )
-        .slice(0, 20) || [];
+        .slice(0, 20);
+    })();
 
     return { status, output, concerns, files_changed: filesChanged };
   } catch (err) {
     return { status: 'blocked', output: `Subagent error: ${err.message}`, concerns: [] };
+  } finally {
+    if (session?.id) {
+      try {
+        await client.session.delete({
+          path: { id: session.id },
+          ...(toolContext.directory ? { query: { directory: toolContext.directory } } : {}),
+        });
+      } catch {
+        /* cleanup failure is non-fatal */
+      }
+    }
   }
 }
 
@@ -354,9 +391,34 @@ export const RegentPlugin = async ({ client }) => {
             }),
           );
 
+          const completed = results.filter(
+            (r) => r.status === 'done' || r.status === 'done_with_concerns',
+          );
+          const blocked = results.filter((r) => r.status === 'blocked');
+          const needsContext = results.filter((r) => r.status === 'needs_context');
+
+          const summaryParts = [];
+          const findingsList = completed.map((r) => r.question);
+          if (findingsList.length > 0) {
+            summaryParts.push(`Addressed: ${findingsList.join(', ')}`);
+          }
+          if (blocked.length > 0) {
+            summaryParts.push(
+              `Blocked: ${blocked.map((r) => r.question).join(', ')}`,
+            );
+          }
+          if (needsContext.length > 0) {
+            summaryParts.push(
+              `Needs context: ${needsContext.map((r) => r.question).join(', ')}`,
+            );
+          }
+
           return JSON.stringify({
             findings: results,
-            synthesis: 'Research complete. Review individual findings above.',
+            synthesis:
+              summaryParts.length > 0
+                ? summaryParts.join('. ') + '.'
+                : 'No research results returned.',
           });
         },
       }),
@@ -429,9 +491,11 @@ export const RegentPlugin = async ({ client }) => {
 
           // Focus path
           if (args.focus) {
+            const worktreeRoot = path.resolve(worktree);
             const focusPath = path.resolve(worktree, args.focus);
-            result += `\n## Focus: ${args.focus}\n`;
-            if (fs.existsSync(focusPath)) {
+            if (!focusPath.startsWith(worktreeRoot + path.sep) && focusPath !== worktreeRoot) {
+              result += `\n## Focus: ${args.focus}\n(path outside project directory)\n`;
+            } else if (fs.existsSync(focusPath)) {
               const stat = fs.statSync(focusPath);
               if (stat.isDirectory()) {
                 const items = fs.readdirSync(focusPath);
@@ -477,6 +541,24 @@ export const RegentPlugin = async ({ client }) => {
             });
           }
 
+          const getKeyBigrams = (s) => {
+            const words = s
+              .toLowerCase()
+              .split(/\s+/)
+              .filter((w) => w.length > 3);
+            const bigrams = [];
+            for (let i = 0; i < words.length - 1; i++) {
+              bigrams.push(words[i] + ' ' + words[i + 1]);
+            }
+            return bigrams;
+          };
+
+          const getKeyUnigrams = (s) =>
+            s
+              .toLowerCase()
+              .split(/\s+/)
+              .filter((w) => w.length > 3);
+
           const stripCheckbox = (s) =>
             s
               .replace(/^[-*]\s*\[\s*[x ]?\s*\]\s*/i, '')
@@ -494,10 +576,14 @@ export const RegentPlugin = async ({ client }) => {
           const unmet = [];
 
           for (const req of reqs) {
-            const reqLower = req.toLowerCase();
-            const found = reqLower
-              .split(/\s+/)
-              .some((word) => word.length > 3 && impl.includes(word));
+            const reqBigrams = getKeyBigrams(req);
+            const reqUnigrams = getKeyUnigrams(req);
+            let found;
+            if (reqBigrams.length > 0) {
+              found = reqBigrams.some((b) => impl.includes(b));
+            } else {
+              found = reqUnigrams.some((w) => impl.includes(w));
+            }
             if (found) {
               met.push(req);
             } else {
@@ -513,11 +599,12 @@ export const RegentPlugin = async ({ client }) => {
           const extras = implLines.filter((line) => {
             const lineLower = line.toLowerCase();
             return !reqs.some((req) => {
-              const reqWords = req
-                .toLowerCase()
-                .split(/\s+/)
-                .filter((w) => w.length > 3);
-              return reqWords.some((w) => lineLower.includes(w));
+              const reqBigrams = getKeyBigrams(req);
+              const reqUnigrams = getKeyUnigrams(req);
+              if (reqBigrams.length > 0) {
+                return reqBigrams.some((b) => lineLower.includes(b));
+              }
+              return reqUnigrams.some((w) => lineLower.includes(w));
             });
           });
 

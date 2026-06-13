@@ -1,6 +1,7 @@
 ---
 description: TDD red-green-refactor — iron law: no code without failing test
 subtask: true
+agent: regent-general
 ---
 
 The user wants to develop using TDD:

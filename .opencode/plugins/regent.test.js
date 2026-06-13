@@ -436,3 +436,175 @@ test('verify returns structured error on missing args', async () => {
   assert.equal(partial.compliant, false);
   assert.match(partial.summary, /Missing required arguments/);
 });
+
+test('dispatchSubagent cleans up session when prompt throws', async () => {
+  let deletedId = null;
+  const plugin = await RegentPlugin({
+    client: {
+      session: {
+        async create() {
+          return { data: { id: 's-leak-test' } };
+        },
+        async prompt() {
+          throw new Error('Simulated prompt failure');
+        },
+        async delete(input) {
+          deletedId = input.path.id;
+          return { data: {} };
+        },
+      },
+    },
+  });
+
+  const output = JSON.parse(
+    await plugin.tool.delegate.execute(
+      { task: 'Fail', context: 'ctx', expected_output: 'done' },
+      { directory: repoRoot },
+    ),
+  );
+
+  assert.equal(output.status, 'blocked');
+  assert.equal(deletedId, 's-leak-test', 'session must be deleted even after prompt failure');
+});
+
+test('explore blocks path traversal outside worktree', async () => {
+  const plugin = await RegentPlugin({ client: {} });
+
+  const output = JSON.parse(
+    await plugin.tool.explore.execute(
+      { query: 'traversal attempt', focus: '../../../etc/passwd' },
+      { worktree: repoRoot },
+    ),
+  );
+
+  assert.match(output.structure, /outside project directory/);
+});
+
+test('verify uses bigram matching for accuracy', async () => {
+  const plugin = await RegentPlugin({ client: {} });
+
+  const resultWithMatch = JSON.parse(
+    await plugin.tool.verify.execute({
+      requirements: '- Add user login form',
+      implementation_context: 'src/login.tsx contains the user login form with email and password fields',
+    }),
+  );
+  assert.equal(resultWithMatch.requirements_met.length, 1);
+  assert.equal(resultWithMatch.requirements_unmet.length, 0);
+
+  const resultWithoutMatch = JSON.parse(
+    await plugin.tool.verify.execute({
+      requirements: '- Implement payment processing',
+      implementation_context: 'src/login.tsx has the login form',
+    }),
+  );
+  assert.equal(resultWithoutMatch.requirements_met.length, 0);
+  assert.equal(resultWithoutMatch.requirements_unmet.length, 1);
+});
+
+test('research synthesis returns meaningful summary', async () => {
+  const plugin = await RegentPlugin({
+    client: {
+      session: {
+        async create() {
+          return { data: { id: 's-synth' } };
+        },
+        async prompt() {
+          return { data: { parts: [{ type: 'text', text: 'Key findings here' }] } };
+        },
+        async delete() {
+          return { data: {} };
+        },
+      },
+    },
+  });
+
+  const output = JSON.parse(
+    await plugin.tool.research.execute(
+      {
+        questions: [
+          { id: 'q1', question: 'What is Regent?' },
+        ],
+      },
+      { directory: repoRoot },
+    ),
+  );
+
+  assert.match(output.synthesis, /Regent/);
+  assert.doesNotMatch(output.synthesis, /Review individual findings/);
+});
+
+test('research synthesis reports blocked questions', async () => {
+  const plugin = await RegentPlugin({
+    client: {
+      session: {
+        async create() {
+          return { data: { id: 's-block-r' } };
+        },
+        async prompt() {
+          return { data: { parts: [{ type: 'text', text: 'BLOCKED\nNo access' }] } };
+        },
+        async delete() {
+          return { data: {} };
+        },
+      },
+    },
+  });
+
+  const output = JSON.parse(
+    await plugin.tool.research.execute(
+      {
+        questions: [
+          { id: 'q1', question: 'Secret API' },
+        ],
+      },
+      { directory: repoRoot },
+    ),
+  );
+
+  assert.match(output.synthesis, /Blocked/);
+});
+
+test('filesChanged regex matches extensionless paths with separators', async () => {
+  const calls = [];
+  const plugin = await RegentPlugin({
+    client: {
+      session: {
+        async create(input) {
+          calls.push(['create', input]);
+          return { data: { id: 's-files2' } };
+        },
+        async prompt(_input) {
+          return {
+            data: {
+              parts: [{
+                type: 'text',
+                text: [
+                  '### Files Changed',
+                  'src/components/Header',
+                  'src/index.js',
+                  'Makefile',
+                ].join('\n'),
+              }],
+            },
+          };
+        },
+        async delete(input) {
+          calls.push(['delete', input]);
+          return { data: {} };
+        },
+      },
+    },
+  });
+
+  const output = JSON.parse(
+    await plugin.tool.delegate.execute(
+      { task: 'Fix bugs', context: 'Various fixes', expected_output: 'Working' },
+      { directory: repoRoot, worktree: repoRoot },
+    ),
+  );
+
+  assert.ok(output.files_changed.includes('src/index.js'), 'should match path with extension');
+  assert.ok(output.files_changed.includes('src/components/Header'), 'should match extensionless path with separator');
+  assert.equal(output.files_changed.length, 2);
+});

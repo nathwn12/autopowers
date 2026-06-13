@@ -1,6 +1,7 @@
 ---
 description: Systematic debugging — loop, reproduce, hypothesise, instrument, fix, cleanup
 subtask: true
+agent: regent-general
 ---
 
 The user wants to diagnose:

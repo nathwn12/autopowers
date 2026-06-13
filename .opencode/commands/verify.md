@@ -1,6 +1,7 @@
 ---
 description: Verification evidence gate — fresh proof before any completion claim
 subtask: true
+agent: regent-general
 ---
 
 The user wants to verify:

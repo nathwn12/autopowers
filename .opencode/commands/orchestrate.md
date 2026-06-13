@@ -1,6 +1,7 @@
 ---
 description: Run the AutoPowers pipeline — clarify, plan, execute, verify, report
 subtask: true
+agent: regent-general
 ---
 
 The user's goal:

@@ -1,6 +1,7 @@
 ---
 description: Research a topic using parallel subagents
 subtask: true
+agent: regent-general
 ---
 
 The user wants to research:

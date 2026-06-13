@@ -1,6 +1,7 @@
 ---
 description: Delegate a single well-defined task to a subagent
 subtask: true
+agent: regent-general
 ---
 
 The user wants to delegate:
